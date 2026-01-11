@@ -459,7 +459,8 @@ get_archive_pkg_name() { echo "$__ARCHIVE_PKG_NAME__"; }
 
 patch_apk() {
 	local stock_input=$1 patched_apk=$2 patcher_args=$3 cli_jar=$4 patches_jar=$5 version=$6
-	jq --arg ver "V$version" '.["yt-version"] = $ver' manifest.json > manifest.tmp && mv manifest.tmp manifest.json
+	local pversion=$(echo "$patches_jar" | awk -F'patches-|\\.mpp' '{print $2}')
+	jq --arg ver "V$version" --arg pver "V$pversion" '.["yt-version"] = $ver | .["patch-version"] = $pver' manifest.json > manifest.tmp && mv manifest.tmp manifest.json
 	local cmd="env -u GITHUB_REPOSITORY java -jar $cli_jar patch $stock_input --purge -o $patched_apk -p $patches_jar --keystore=ks.keystore \
 --keystore-entry-password=123456789 --keystore-password=123456789 --signer=jhc --keystore-entry-alias=jhc $patcher_args"
 	if [ "$OS" = Android ]; then cmd+=" --custom-aapt2-binary=${AAPT2}"; fi
