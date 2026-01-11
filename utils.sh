@@ -458,7 +458,8 @@ get_archive_pkg_name() { echo "$__ARCHIVE_PKG_NAME__"; }
 # --------------------------------------------------
 
 patch_apk() {
-	local stock_input=$1 patched_apk=$2 patcher_args=$3 cli_jar=$4 patches_jar=$5
+	local stock_input=$1 patched_apk=$2 patcher_args=$3 cli_jar=$4 patches_jar=$5 version=$6
+	jq --arg ver "V$version" '.["yt-version"] = $ver' manifest.json > manifest.tmp && mv manifest.tmp manifest.json
 	local cmd="env -u GITHUB_REPOSITORY java -jar $cli_jar patch $stock_input --purge -o $patched_apk -p $patches_jar --keystore=ks.keystore \
 --keystore-entry-password=123456789 --keystore-password=123456789 --signer=jhc --keystore-entry-alias=jhc $patcher_args"
 	if [ "$OS" = Android ]; then cmd+=" --custom-aapt2-binary=${AAPT2}"; fi
@@ -619,7 +620,7 @@ build_rv() {
 			fi
 		fi
 		if [ "${NORB:-}" != true ] || [ ! -f "$patched_apk" ]; then
-			if ! patch_apk "$stock_apk" "$patched_apk" "${patcher_args[*]}" "${args[cli]}" "${args[ptjar]}"; then
+			if ! patch_apk "$stock_apk" "$patched_apk" "${patcher_args[*]}" "${args[cli]}" "${args[ptjar]}" "$version"; then
 				epr "Building '${table}' failed!"
 				return 0
 			fi
@@ -646,7 +647,7 @@ build_rv() {
 			"https://raw.githubusercontent.com/${GITHUB_REPOSITORY-}/update/${upj}" \
 			"$base_template"
 
-		local module_output="${app_name_l}-${rv_brand_f}-magisk-v${version_f}-p${patches_ver%.*}.zip"
+		local module_output="${rv_brand_f}-yt-magisk-v${version_f}-p${patches_ver%.*}.zip"
 		pr "Packing module ${table}"
 		cp -f "$patched_apk" "${base_template}/base.apk"
 		if [ "${args[include_stock]}" = true ]; then cp -f "$stock_apk" "${base_template}/${pkg_name}.apk"; fi
