@@ -71,6 +71,13 @@ jobs:
           file_glob: true
           overwrite: true
 
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          branch: main
+          skip_checkout: true
+          file_pattern: manifest.json
+          commit_message: Update manifest.json for version ${{ steps.next_ver_code.outputs.NEXT_VER_CODE }}
+
       - name: Update changelog and Magisk update json
         id: update_config
         run: |
@@ -107,13 +114,6 @@ jobs:
           skip_checkout: true
           file_pattern: build.md *-update.json
           commit_message: Bump version ${{ steps.next_ver_code.outputs.NEXT_VER_CODE }}
-
-      - uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          branch: main
-          skip_checkout: true
-          file_pattern: manifest.json
-          commit_message: Update manifest.json for version ${{ steps.next_ver_code.outputs.NEXT_VER_CODE }}
 
       - name: Report to Telegram
         env:
