@@ -9,4 +9,4 @@ Builds [Morphe](https://github.com/MorpheApp/morphe-patches) YT Magisk module :p
 
 :gear:	Magisk: <b>20.4+</b>  
 :iphone: Android: <b>9.0+</b>  
-:hammer_and_pick: Arch: <b>arm64</b>  
+:hammer_and_pick: Arch: <b>arm64-v8a</b>  
