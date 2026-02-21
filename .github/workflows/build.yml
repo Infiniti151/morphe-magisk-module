@@ -76,7 +76,7 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v7
         with:
           branch: main
-          skip_checkout: true
+          skip_checkout: false
           file_pattern: manifest.json
           commit_message: Update manifest.json for version ${{ steps.next_ver_code.outputs.NEXT_VER_CODE }}
 
