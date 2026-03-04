@@ -27,6 +27,7 @@ jobs:
           submodules: true
 
       - name: Import GPG key
+        id: import-gpg
         uses: crazy-max/ghaction-import-gpg@v6
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
@@ -88,6 +89,7 @@ jobs:
           skip_checkout: false
           file_pattern: manifest.json
           commit_message: Update manifest.json for version ${{ steps.next_ver_code.outputs.NEXT_VER_CODE }}
+          commit_options: '--gpg-sign=${{ steps.import-gpg.outputs.keyid }}'
 
       - name: Update changelog and update json
         id: update_config
@@ -126,6 +128,7 @@ jobs:
           skip_checkout: true
           file_pattern: build.md *-update.json
           commit_message: Bump version ${{ steps.next_ver_code.outputs.NEXT_VER_CODE }}
+          commit_options: '--gpg-sign=${{ steps.import-gpg.outputs.keyid }}'
 
       - name: Report to Telegram
         env:
