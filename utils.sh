@@ -206,13 +206,13 @@ _req() {
     local ip="$1" op="$2"
     shift 2
 
-    local ua="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
-    
     local progress_flag="-s"
     if [ -t 1 ]; then
         progress_flag="-#"
     fi
 
+    local ua="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+    
     local curl_cmd=(curl -L 
         -A "$ua" 
         -H "Accept-Language: en-US,en;q=0.9"
@@ -224,10 +224,7 @@ _req() {
         --fail)
 
     if [ "$op" = - ]; then
-        if ! "${curl_cmd[@]}" -s -S "$@" "$ip"; then
-            epr "Request failed: $ip"
-            return 1
-        fi
+        "${curl_cmd[@]}" -s -S "$@" "$ip" || return 1
     else
         if [ -f "$op" ]; then return; fi
         local dlp
@@ -239,7 +236,6 @@ _req() {
         fi
 
         if ! "${curl_cmd[@]}" "$progress_flag" -S "$@" "$ip" -o "$dlp"; then
-            epr "Request failed: $ip"
             rm -f "$dlp"
             return 1
         fi
@@ -552,15 +548,21 @@ build_rv() {
 	local tried_dl=()
 	for dl_p in archive apkmirror uptodown; do
 		if [ -z "${args[${dl_p}_dlurl]}" ]; then continue; fi
-		if ! get_${dl_p}_resp "${args[${dl_p}_dlurl]}" || ! pkg_name=$(get_"${dl_p}"_pkg_name); then
-			args[${dl_p}_dlurl]=""
-			epr "ERROR: Could not find ${table} in ${dl_p}"
-			continue
+		
+		if get_${dl_p}_resp "${args[${dl_p}_dlurl]}" && pkg_name=$(get_"${dl_p}"_pkg_name); then
+			tried_dl+=("$dl_p")
+			dl_from=$dl_p
+			break
+		else
+			echo "[-] Source ${dl_p} failed. Trying next available source..."
+			continue 
 		fi
-		tried_dl+=("$dl_p")
-		dl_from=$dl_p
-		break
 	done
+
+	if [ -z "$dl_from" ]; then
+		echo "[-] ERROR: All download sources failed (Archive, APKMirror, and Uptodown)."
+		exit 1
+	fi
 	if [ -z "$pkg_name" ]; then
 		epr "empty pkg name, not building ${table}."
 		return 0
