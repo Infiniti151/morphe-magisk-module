@@ -206,14 +206,25 @@ _req() {
     local ip="$1" op="$2"
     shift 2
 
+    local ua="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+    
     local progress_flag="-s"
     if [ -t 1 ]; then
         progress_flag="-#"
     fi
 
+    local curl_cmd=(curl -L 
+        -A "$ua" 
+        -H "Accept-Language: en-US,en;q=0.9"
+        -H "Referer: https://www.apkmirror.com/"
+        -c "$TEMP_DIR/cookie.txt" 
+        -b "$TEMP_DIR/cookie.txt"
+        --connect-timeout 5 
+        --retry 3 
+        --fail)
+
     if [ "$op" = - ]; then
-        if ! curl -L -c "$TEMP_DIR/cookie.txt" -b "$TEMP_DIR/cookie.txt" \
-            --connect-timeout 5 --retry 3 --fail -s -S "$@" "$ip"; then
+        if ! "${curl_cmd[@]}" -s -S "$@" "$ip"; then
             epr "Request failed: $ip"
             return 1
         fi
@@ -227,8 +238,7 @@ _req() {
             return
         fi
 
-        if ! curl -L -c "$TEMP_DIR/cookie.txt" -b "$TEMP_DIR/cookie.txt" \
-            --connect-timeout 5 --retry 3 --fail "$progress_flag" -S "$@" "$ip" -o "$dlp"; then
+        if ! "${curl_cmd[@]}" "$progress_flag" -S "$@" "$ip" -o "$dlp"; then
             epr "Request failed: $ip"
             rm -f "$dlp"
             return 1
