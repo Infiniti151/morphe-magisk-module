@@ -90,6 +90,7 @@ jobs:
           branch: main
           skip_checkout: false
           file_pattern: manifest.json
+          add_options: 'manifest.json'
           commit_message: Update manifest.json for version ${{ steps.next_ver_code.outputs.NEXT_VER_CODE }}
           commit_options: "--gpg-sign=${{ steps.import-gpg.outputs.keyid }}"
           commit_user_name: ${{ steps.import-gpg.outputs.name }}
