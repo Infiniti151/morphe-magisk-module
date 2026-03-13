@@ -205,28 +205,18 @@ config_update() {
 _req() {
     local ip="$1" op="$2"
     shift 2
-
-    local progress_flag="-s"
-    if [ -t 1 ]; then
-        progress_flag="-#"
-    fi
-
-    local ua="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
     
-    local curl_cmd=(curl -L 
-        -A "$ua" 
-        -H "Accept-Language: en-US,en;q=0.9"
-        -H "Referer: https://www.apkmirror.com/"
-        -c "$TEMP_DIR/cookie.txt" 
-        -b "$TEMP_DIR/cookie.txt"
-        --connect-timeout 5 
-        --retry 3 
-        --fail)
+    touch "$TEMP_DIR/cookie.txt"
 
     if [ "$op" = - ]; then
-        "${curl_cmd[@]}" -s -S "$@" "$ip" || return 1
+        if ! curl -L -c "$TEMP_DIR/cookie.txt" -b "$TEMP_DIR/cookie.txt" \
+            --connect-timeout 5 --retry 1 --fail -s -S "$@" "$ip"; then
+            echo "[-] Request failed: $ip" >&2
+            return 1
+        fi
     else
         if [ -f "$op" ]; then return; fi
+        
         local dlp
         dlp="$(dirname "$op")/tmp.$(basename "$op")"
         
@@ -235,9 +225,13 @@ _req() {
             return
         fi
 
-        if ! "${curl_cmd[@]}" "$progress_flag" -S "$@" "$ip" -o "$dlp"; then
-            rm -f "$dlp"
-            return 1
+        if [ "$GITHUB_ACTIONS" = "true" ]; then
+            echo "[+] Downloading $ip..."
+            curl -L -c "$TEMP_DIR/cookie.txt" -b "$TEMP_DIR/cookie.txt" \
+                --connect-timeout 10 --retry 1 --fail -s -S "$@" "$ip" -o "$dlp"
+        else
+            curl -L -c "$TEMP_DIR/cookie.txt" -b "$TEMP_DIR/cookie.txt" \
+                --connect-timeout 10 --retry 1 --fail -# "$@" "$ip" -o "$dlp"
         fi
         mv -f "$dlp" "$op"
     fi
